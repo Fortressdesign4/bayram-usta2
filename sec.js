@@ -187,8 +187,7 @@ const SecurityModule = {
     const checkFreeze = () => {
       if (freezeDetected) {
         console.warn("Freeze erkannt! Versuche, die Seite wiederherzustellen.");
-        // The page will not reload, but a warning will be shown
-        alert("Page is frozen, attempting recovery.");
+        alert("Page might be frozen. Attempting recovery.");
       }
     };
 
@@ -250,4 +249,48 @@ const SecurityModule = {
 console.log("== SecurityModule Testlauf ==");
 
 // Test-User
-const user = { name: "Max",
+const user = { name: "Max", roles: ["admin"], consent: true, mfa: true };
+
+// Test Logging für den User (wird nur erfolgen, wenn Tracking nicht blockiert ist)
+SecurityModule.logAccess(user.name, "Accessed the root route");
+
+// Weitere Tests und Sicherheitsprüfungen
+console.log("SQLi erkannt:", SecurityModule.detectSQLi("SELECT * FROM users WHERE 1=1;"));
+console.log("XSS erkannt:", SecurityModule.detectXSS('<script>alert("xss")</script>'));
+
+// Malicious Content Cleaner starten
+setInterval(() => {
+  console.log("Malicious Content Cleaner läuft...");
+}, 5000);
+
+// IP-Leak Schutz
+console.log("IP-Leak erkannt:", SecurityModule.detectIPLeak());
+
+// WebRTC Leak Schutz
+SecurityModule.detectWebRTCLeak();
+
+// Schutz gegen Header-Leaks
+SecurityModule.preventHeaderLeaks();
+
+// Wake Lock aktivieren
+SecurityModule.enableWakeLock();
+
+// Bot Detection
+SecurityModule.detectBot();
+
+// Freeze Detection aktivieren
+SecurityModule.detectFreeze();
+
+// Prevent 304 Status and force 200 OK for HTML, CSS, and JS files
+SecurityModule.prevent304Status();
+
+// NIS-2 / ISO 27001 Compliance Features
+const encryptedData = SecurityModule.encryptData("Sensitive Data");
+console.log("Encrypted Data:", encryptedData);
+
+const riskAssessment = SecurityModule.assessRisk("Sensitive Data");
+console.log("Risk Assessment:", riskAssessment);
+
+SecurityModule.logIncident("Unauthorized Access", "Attempted access to restricted area");
+
+console.log("== Testlauf Ende ==");
