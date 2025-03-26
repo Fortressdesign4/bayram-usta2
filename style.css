@@ -4,6 +4,9 @@
 #side-nav ul { list-style: none; padding: 0; }
 #side-nav li { margin-bottom: 20px; }
 #side-nav a { text-decoration: none; color: #333; font-weight: bold; }
+#header {
+    max-width: 100%;
+}
 h2 {
     color: #2c3e50;
     font-size: 1.5em;
