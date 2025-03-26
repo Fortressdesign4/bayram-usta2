@@ -1,4 +1,4 @@
- (function() {
+(function() {
             // Dynamisches HTML für die Seite erstellen
             const root = document.getElementById('app'); // Das Ziel-Element, in das alles eingefügt wird
 
