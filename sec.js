@@ -44,20 +44,14 @@ const SecurityModule = {
                 .replace(/expression\([^\)]*\)/gi, "");
   },
 
-  // **SQL Injection Prevention**
+  // **Erkennung von SQL-Injektionen**
   detectSQLi(input) {
-    const sqlPattern = /(\bor\b|\band\b|--|;|\/\*|\*\/|xp_)/i;
-    if (sqlPattern.test(input)) {
-      console.warn("Possible SQL Injection detected:", input);
-      return true;
-    }
-    return false;
+    return /(\bor\b|\band\b|--|;|\/\*|\*\/|xp_)/i.test(input);
   },
 
   // **Erkennung von XSS-Angriffen**
   detectXSS(input) {
-    const xssPattern = /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi;
-    return xssPattern.test(input);
+    return /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi.test(input);
   },
 
   // **WebRTC Leak Erkennung**
@@ -142,24 +136,27 @@ const SecurityModule = {
   maliciousContentCleaner() {
     setInterval(() => {
       const maliciousSelectors = 'script, iframe, object, embed, link[rel="import"], [onload], [onclick], [onerror], [style*="expression("]';
-      const sanitizeElement = (el) => {
+      
+      // Find malicious elements in the DOM
+      document.querySelectorAll(maliciousSelectors).forEach((el) => {
+        // Remove event attributes (onclick, onload, etc.)
         ['onload', 'onclick', 'onerror', 'style'].forEach(attr => el.removeAttribute(attr));
 
+        // If the element has an inline style, sanitize it
         if (el.hasAttribute('style')) {
           const sanitizedStyle = this.sanitizeCSS(el.getAttribute('style'));
           el.setAttribute('style', sanitizedStyle);
         }
 
+        // If it's a script, iframe, or object tag, clear it
         if (el.tagName === 'SCRIPT' || el.tagName === 'IFRAME' || el.tagName === 'OBJECT' || el.tagName === 'EMBED') {
           el.innerHTML = '';
           el.removeAttribute('src');
         }
 
         console.warn('Gefährliches Element bereinigt:', el);
-      };
-
-      document.querySelectorAll(maliciousSelectors).forEach(sanitizeElement);
-    }, 5000);
+      });
+    }, 5000); // Run every 5 seconds to keep the page sanitized without reload
   },
 
   // **Bot Detection**
@@ -190,7 +187,7 @@ const SecurityModule = {
     const checkFreeze = () => {
       if (freezeDetected) {
         console.warn("Freeze erkannt! Versuche, die Seite wiederherzustellen.");
-        window.location.reload();
+        window.location.reload();  // You can change this action if needed, to avoid reload
       }
     };
 
@@ -199,11 +196,12 @@ const SecurityModule = {
       timeout = setTimeout(() => {
         freezeDetected = true;
         checkFreeze();
-      }, 5000);
+      }, 5000); // Timeout von 5 Sekunden, um einen Freeze zu erkennen
     };
 
     startFreezeDetection();
 
+    // Reset der Freeze-Erkennung bei Benutzeraktivität
     ['mousemove', 'keydown', 'click'].forEach(event => {
       window.addEventListener(event, () => {
         freezeDetected = false;
@@ -219,7 +217,8 @@ const SecurityModule = {
 
     window.fetch = (url, options) => {
       return originalFetch(url, options).then(response => {
-        if (response.status === 304) {
+        // Check if the status is 304 and modify it to 200
+        if (response.status === 304 && (url.endsWith('.html') || url.endsWith('.css') || url.endsWith('.js'))) {
           console.log(`Intercepted 304 response for: ${url}. Changing to 200 OK.`);
           const clonedResponse = new Response(response.body, response);
           clonedResponse.status = 200; // Changing status to 200
@@ -232,7 +231,7 @@ const SecurityModule = {
 
   // **NIS-2 / ISO 27001 Compliance: Encryption, Risk Assessment, Logging**
   encryptData(data) {
-    return btoa(data);
+    return btoa(data);  // Example of data encryption
   },
 
   assessRisk(data) {
