@@ -1,57 +1,65 @@
 (function() {
-    // Sicherstellen, dass die Seite über HTTPS geladen wird
-    if (window.location.protocol !== 'https:') {
-        console.warn('Warnung: Seite ist nicht über HTTPS geladen!');
-    }
+    // Setzen einer Content Security Policy (CSP), um die Ausführung von unbefugtem Skriptcode zu verhindern
+    const cspMetaTag = document.createElement('meta');
+    cspMetaTag.httpEquiv = 'Content-Security-Policy';
+    cspMetaTag.content = "default-src 'self'; script-src 'self' https://raw.githubusercontent.com; object-src 'none'; connect-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline';";
+    document.head.appendChild(cspMetaTag);
 
-    // CORS-Header Überprüfung
-    if (!document.cors) {
-        console.warn('CORS-Fehler: Fehlende CORS-Header.');
-    }
-
-    // Checken, ob der Browser JavaScript und Cookies aktiviert hat
-    if (navigator.cookieEnabled) {
-        console.log('Cookies sind aktiviert.');
-    } else {
-        console.warn('Warnung: Cookies sind deaktiviert!');
-    }
-
-    // Schutz vor Clickjacking durch das Setzen von X-Frame-Options
-    if (window.top !== window.self) {
-        console.error('Warnung: Clickjacking erkannt!');
-    }
-
-    // Schutz vor XSS (Cross-Site Scripting) durch das Escaping von Inhalten
-    document.body.innerHTML = document.body.innerHTML.replace(/<script[^>]*>.*?<\/script>/g, "");
-
-    // Überwachung von Fetch-Requests und XHR (XMLHttpRequest)
-    const originalFetch = window.fetch;
-    window.fetch = function(...args) {
-        console.log('Fetching:', args[0]); // Geben die URL des Fetch-Requests aus
-        return originalFetch.apply(this, args);
+    // Funktion zum Laden und Ausführen eines externen Skripts mit Subresource Integrity (SRI) für Sicherheit
+    const loadScript = (url, integrity) => {
+        const scriptTag = document.createElement('script');
+        scriptTag.src = url;
+        if (integrity) {
+            scriptTag.integrity = integrity;
+            scriptTag.crossOrigin = 'anonymous';  // Sicherstellen, dass CORS korrekt gehandhabt wird
+        }
+        scriptTag.onload = () => {
+            console.log(`${url} wurde erfolgreich geladen und ausgeführt.`);
+        };
+        scriptTag.onerror = (error) => {
+            console.error(`Fehler beim Laden von ${url}:`, error);
+        };
+        document.body.appendChild(scriptTag);
     };
 
-    const originalXHR = XMLHttpRequest.prototype.open;
-    XMLHttpRequest.prototype.open = function() {
-        console.log('XHR-Request:', arguments[1]); // Geben die URL des XHR-Requests aus
-        return originalXHR.apply(this, arguments);
+    // Lade die Skripte mit Subresource Integrity (SRI) Hashes
+    loadScript("https://raw.githubusercontent.com/Fortressdesign4/bayram-usta2/refs/heads/main/sec.js", "sha384-xyz...");  // Beispiel SRI Hash
+    loadScript("https://raw.githubusercontent.com/Fortressdesign4/bayram-usta2/refs/heads/main/useragents.js", "sha384-abc...");  // Beispiel SRI Hash
+    loadScript("https://raw.githubusercontent.com/Fortressdesign4/bayram-usta2/refs/heads/main/app.js", "sha384-def...");  // Beispiel SRI Hash
+
+    // Funktion zum Laden und Einfügen des Stylesheets mit Integritätsprüfung
+    const loadCSS = (url, integrity) => {
+        const linkTag = document.createElement('link');
+        linkTag.rel = 'stylesheet';
+        linkTag.href = url;
+        if (integrity) {
+            linkTag.integrity = integrity;
+            linkTag.crossOrigin = 'anonymous';
+        }
+        linkTag.onload = () => {
+            console.log(`${url} wurde erfolgreich geladen.`);
+        };
+        linkTag.onerror = (error) => {
+            console.error(`Fehler beim Laden von ${url}:`, error);
+        };
+        document.head.appendChild(linkTag);
     };
 
-    // Schutz vor SQL-Injection (Basic Input Validation)
-    const inputs = document.querySelectorAll('input, textarea');
-    inputs.forEach(input => {
-        input.addEventListener('input', function() {
-            if (/[;'"]/g.test(this.value)) {
-                console.warn('Warnung: Verdächtige Eingabe entdeckt!');
-            }
+    // Lade die CSS-Datei mit einem SRI-Hash
+    loadCSS("https://raw.githubusercontent.com/Fortressdesign4/bayram-usta2/refs/heads/main/style.css", "sha384-ghi...");  // Beispiel SRI Hash
+
+    // Funktion zum sicheren Laden eines Bildes
+    const proxyUrl = 'https://localhost/bayram-usta/';
+    const imageUrl = '4/bayram-usta2/blob/main/bg-header.png';
+
+    fetch(proxyUrl + imageUrl)
+        .then(response => response.blob())
+        .then(blob => {
+            const imageUrl = URL.createObjectURL(blob);
+            document.getElementById('header').style.backgroundImage = `url(${imageUrl})`;
+        })
+        .catch(error => {
+            console.error('Fehler beim Laden des Bildes:', error);
         });
-    });
 
-    // IP-Leak-Schutz (Verhindert, dass private IP-Adressen gesendet werden)
-    if (window.location.hostname.match(/^192\.|^10\.|^172\.(1[6-9]|2[0-9]|3[01])/)) {
-        console.warn('Warnung: Private IP-Adresse erkannt!');
-    }
-
-    // Aufruf der Funktion zum Abrufen der öffentlichen IP
-    getPublicIP();
 })();
