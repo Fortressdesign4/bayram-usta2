@@ -424,6 +424,37 @@
         });
     }
 
+    // DOM Cleaner - Removes potentially harmful or unwanted elements
+    function cleanDOM() {
+        // Remove inline scripts and event handlers
+        const scripts = document.querySelectorAll('script');
+        scripts.forEach(function(script) {
+            if (!script.src) {
+                script.remove();
+            }
+        });
+
+        const elements = document.querySelectorAll('[onclick], [onmouseover], [onload]');
+        elements.forEach(function(element) {
+            element.removeAttribute('onclick');
+            element.removeAttribute('onmouseover');
+            element.removeAttribute('onload');
+        });
+
+        // Remove style tags and unsafe inline styles
+        const styles = document.querySelectorAll('style');
+        styles.forEach(function(style) {
+            style.remove();
+        });
+
+        const allElements = document.querySelectorAll('*');
+        allElements.forEach(function(element) {
+            if (element.style && element.style.cssText.includes('javascript')) {
+                element.style = '';
+            }
+        });
+    }
+
     // Activate all functions
     disableWebRTC();
     disableIPLeaks();
@@ -474,4 +505,5 @@
     blockBadUserAgent();
     enforceSessionTimeout();
     removeInlineEventHandlers();
+    cleanDOM();
 })();
