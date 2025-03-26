@@ -1,5 +1,5 @@
 *{margin: 0;box-sizing: border-box;}
-#root #top-bar{height: 40px; width: 100%; background-color: rgb(229, 211, 201); display: flex; justify-content: center; align-items: center;}
+#app #top-bar{height: 40px; width: 100%; background-color: rgb(229, 211, 201); display: flex; justify-content: center; align-items: center;}
 #top-bar i{font-size: 40px; color: #333;}
 #side-nav ul { list-style: none; padding: 0; }
 #side-nav li { margin-bottom: 20px; }
