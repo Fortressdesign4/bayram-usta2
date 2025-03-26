@@ -33,15 +33,15 @@ const SecurityModule = {
                            .replace(/<iframe\b[^<]*<\/iframe>/gi, "")
                            .replace(/<object\b[^<]*<\/object>/gi, "")
                            .replace(/<style\b[^<]*<\/style>/gi, "")
-                           .replace(/<[^>]*>/g, '');  // Removes all other HTML tags
+                           .replace(/<[^>]*>/g, '');  // Entfernt alle anderen HTML-Tags
 
     return sanitized;
   },
 
   // **CSS Injection Prevention**
   sanitizeCSS(input) {
-    return input.replace(/url\([^\)]*\)/gi, "")
-                .replace(/expression\([^\)]*\)/gi, "");
+    return input.replace(/url\([^\)]*\)/gi, "") // Entfernt URL-Injection
+                .replace(/expression\([^\)]*\)/gi, "");  // Entfernt Expression()-CSS-Injection
   },
 
   // **Erkennung von SQL-Injektionen**
@@ -127,170 +127,6 @@ const SecurityModule = {
         console.log('Wake lock freigegeben!');
       });
 
-    } catch (err) {
-      console.error('Fehler beim Aktivieren des Wake Lock:', err);
-    }
-  },
+    } catch (err
 
-  // **Malicious Content Cleaner – läuft alle 5 Sekunden**
-  maliciousContentCleaner() {
-    setInterval(() => {
-      const maliciousSelectors = 'script, iframe, object, embed, link[rel="import"], [onload], [onclick], [onerror], [style*="expression("]';
-      
-      // Find malicious elements in the DOM
-      document.querySelectorAll(maliciousSelectors).forEach((el) => {
-        // Remove event attributes (onclick, onload, etc.)
-        ['onload', 'onclick', 'onerror', 'style'].forEach(attr => el.removeAttribute(attr));
-
-        // If the element has an inline style, sanitize it
-        if (el.hasAttribute('style')) {
-          const sanitizedStyle = this.sanitizeCSS(el.getAttribute('style'));
-          el.setAttribute('style', sanitizedStyle);
-        }
-
-        // If it's a script, iframe, or object tag, clear it
-        if (el.tagName === 'SCRIPT' || el.tagName === 'IFRAME' || el.tagName === 'OBJECT' || el.tagName === 'EMBED') {
-          el.innerHTML = '';
-          el.removeAttribute('src');
-        }
-
-        console.warn('Gefährliches Element bereinigt:', el);
-      });
-    }, 5000); // Run every 5 seconds to keep the page sanitized without reload
-  },
-
-  // **Bot Detection**
-  detectBot() {
-    const userAgent = navigator.userAgent.toLowerCase();
-    const botUserAgents = [
-      'bot',
-      'crawler',
-      'spider',
-      'scraper',
-      'googlebot'
-    ];
-
-    for (let i = 0; i < botUserAgents.length; i++) {
-      if (userAgent.includes(botUserAgents[i])) {
-        console.warn("Bot erkannt: ", userAgent);
-        window.location.href = 'https://www.google.com'; // Redirect to Google if a bot is detected
-        return;
-      }
-    }
-  },
-
-  // **Freeze Detection and Unfreeze Mechanism**
-  detectFreeze() {
-    let freezeDetected = false;
-    let timeout;
-
-    const checkFreeze = () => {
-      if (freezeDetected) {
-        console.warn("Freeze erkannt! Versuche, die Seite wiederherzustellen.");
-        alert("Page might be frozen. Attempting recovery.");
-      }
-    };
-
-    const startFreezeDetection = () => {
-      freezeDetected = false;
-      timeout = setTimeout(() => {
-        freezeDetected = true;
-        checkFreeze();
-      }, 5000);
-    };
-
-    startFreezeDetection();
-
-    // Reset der Freeze-Erkennung bei Benutzeraktivität
-    ['mousemove', 'keydown', 'click'].forEach(event => {
-      window.addEventListener(event, () => {
-        freezeDetected = false;
-        clearTimeout(timeout);
-        startFreezeDetection();
-      });
-    });
-  },
-
-  // **Prevent 304 Status and force 200 OK**
-  prevent304Status() {
-    const originalFetch = window.fetch;
-
-    window.fetch = (url, options) => {
-      return originalFetch(url, options).then(response => {
-        // Check if the status is 304 and modify it to 200
-        if (response.status === 304 && (url.endsWith('.html') || url.endsWith('.css') || url.endsWith('.js'))) {
-          console.log(`Intercepted 304 response for: ${url}. Changing to 200 OK.`);
-          const clonedResponse = new Response(response.body, response);
-          clonedResponse.status = 200; // Changing status to 200
-          return clonedResponse;
-        }
-        return response;
-      });
-    };
-  },
-
-  // **NIS-2 / ISO 27001 Compliance: Encryption, Risk Assessment, Logging**
-  encryptData(data) {
-    return btoa(data);  // Example of data encryption
-  },
-
-  assessRisk(data) {
-    const riskScore = Math.random();
-    console.log(`Risk assessment: ${riskScore}`);
-    return riskScore > 0.5 ? 'High Risk' : 'Low Risk';
-  },
-
-  logIncident(incidentType, message) {
-    console.error(`[Incident] Type: ${incidentType}, Message: ${message}`);
-  }
-};
-
-// **Testlauf des SecurityModules**
-console.log("== SecurityModule Testlauf ==");
-
-// Test-User
-const user = { name: "Max", roles: ["admin"], consent: true, mfa: true };
-
-// Test Logging für den User (wird nur erfolgen, wenn Tracking nicht blockiert ist)
-SecurityModule.logAccess(user.name, "Accessed the root route");
-
-// Weitere Tests und Sicherheitsprüfungen
-console.log("SQLi erkannt:", SecurityModule.detectSQLi("SELECT * FROM users WHERE 1=1;"));
-console.log("XSS erkannt:", SecurityModule.detectXSS('<script>alert("xss")</script>'));
-
-// Malicious Content Cleaner starten
-setInterval(() => {
-  console.log("Malicious Content Cleaner läuft...");
-}, 5000);
-
-// IP-Leak Schutz
-console.log("IP-Leak erkannt:", SecurityModule.detectIPLeak());
-
-// WebRTC Leak Schutz
-SecurityModule.detectWebRTCLeak();
-
-// Schutz gegen Header-Leaks
-SecurityModule.preventHeaderLeaks();
-
-// Wake Lock aktivieren
-SecurityModule.enableWakeLock();
-
-// Bot Detection
-SecurityModule.detectBot();
-
-// Freeze Detection aktivieren
-SecurityModule.detectFreeze();
-
-// Prevent 304 Status and force 200 OK for HTML, CSS, and JS files
-SecurityModule.prevent304Status();
-
-// NIS-2 / ISO 27001 Compliance Features
-const encryptedData = SecurityModule.encryptData("Sensitive Data");
-console.log("Encrypted Data:", encryptedData);
-
-const riskAssessment = SecurityModule.assessRisk("Sensitive Data");
-console.log("Risk Assessment:", riskAssessment);
-
-SecurityModule.logIncident("Unauthorized Access", "Attempted access to restricted area");
-
-console.log("== Testlauf Ende ==");
+    
